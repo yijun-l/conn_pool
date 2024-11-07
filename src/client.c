@@ -15,6 +15,25 @@ int main() {
     }
 
     printf("Connected to PostgreSQL server successfully!\n");
+
+    PGresult *res = PQexec(conn, "SELECT first_name, phone FROM people;");
+
+    int rows = PQntuples(res);
+    int cols = PQnfields(res);
+
+    for (int i = 0; i < cols; i++) {
+        printf("%-15s", PQfname(res, i));
+    }
+    printf("\n");
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("%-15s", PQgetvalue(res, i, j));
+        }
+        printf("\n");
+    }
+
+    PQclear(res);
     PQfinish(conn);
     return 0;
 }
