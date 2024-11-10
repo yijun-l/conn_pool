@@ -67,4 +67,131 @@ int pthread_cancel(pthread_t thread);
 
 - `thread`: The thread to cancel.
 
+# Thread Synchronization
 
+In a multi-threaded environment, where threads share the same memory space, ensuring safe access to shared resources is crucial to prevent data races and maintain program correctness. Thread synchronization mechanisms in the pthread library are essential for coordinating threads and managing shared resources effectively. Two primary synchronization tools provided by pthread are **mutexes** (mutual exclusion locks) and **condition variables**.
+
+## Mutexes
+
+A mutex (mutual exclusion lock) is a synchronization primitive that allows only one thread to access a shared resource at a time. This prevents race conditions, where multiple threads attempt to read or modify shared data concurrently, leading to unpredictable outcomes. 
+
+A mutex is typically locked by a thread before accessing a critical section and unlocked afterward, ensuring exclusive access to shared resources.
+
+### pthread_mutex_init
+
+Initializes a mutex with specified attributes, preparing it for use.
+
+```c
+// Dynamic initialization
+int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
+
+// Static initialization
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+```
+- `mutex`: Pointer to the mutex to initialize.
+- `attr`: Pointer to the mutex attributes (use NULL for default attributes).
+
+
+### pthread_mutex_destroy
+
+Destroys a mutex, releasing any resources it holds. Only a mutex that is not currently locked by any thread should be destroyed.
+
+```c
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+```
+
+- `mutex`: Pointer to the mutex to destroy.
+
+### pthread_mutex_lock
+
+Locks a mutex, blocking the calling thread if the mutex is already locked by another thread. This ensures that only one thread accesses the critical section at a time.
+
+
+```c
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+```
+- `mutex`: Pointer to the mutex to lock.
+
+
+### pthread_mutex_trylock
+
+Attempts to lock a mutex without blocking. If the mutex is already locked by another thread, this function returns immediately with an error code instead of blocking.
+
+
+```c
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+```
+- `mutex`: Pointer to the mutex to attempt locking.
+
+
+### pthread_mutex_unlock
+Unlocks a previously locked mutex, allowing other threads to acquire it.
+
+```c
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+```
+
+- `mutex`: Pointer to the mutex to unlock.
+
+
+## Condition Variables
+
+Condition variables enable threads to communicate with each other by signaling events. They are particularly useful when a thread needs to wait until a certain condition is met before proceeding. Condition variables work alongside mutexes to allow threads to wait for specific conditions and notify other threads when those conditions are satisfied, providing a way to manage complex dependencies between threads.
+
+### pthread_cond_init
+
+Initializes a condition variable with specified attributes, preparing it for use.
+
+```c
+// Dynamic initialization
+int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+
+// Static initialization
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+```
+
+- `cond`: Pointer to the condition variable to initialize.
+- `attr`: Pointer to the condition variable attributes (use NULL for default attributes).
+
+### pthread_cond_destroy
+
+Destroys a condition variable, releasing any resources it holds.
+
+```c
+int pthread_cond_destroy(pthread_cond_t *cond);
+```
+
+- `cond`: Pointer to the condition variable to destroy.
+
+### pthread_cond_wait
+
+Blocks the calling thread until the specified condition variable is signaled. This function must be called while holding a mutex.
+
+```c
+
+int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+
+```
+
+- `cond`: Pointer to the condition variable.
+- `mutex`: Pointer to the mutex, which will be released during the wait and re-acquired when the thread is awakened.
+
+
+### pthread_cond_signal
+
+Wakes up one thread that is waiting on the specified condition variable.
+
+```c
+int pthread_cond_signal(pthread_cond_t *cond);
+```
+- `cond`: Pointer to the condition variable.
+
+### pthread_cond_broadcast
+
+Wakes up all threads that are waiting on the specified condition variable.
+
+```c
+int pthread_cond_broadcast(pthread_cond_t *cond);
+```
+
+- `cond`: Pointer to the condition variable.
