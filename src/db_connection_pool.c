@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 #include "libpq-fe.h"
 #include "db_connection_pool.h"
 
 #define QUEUE_CAPACITY 5
 #define WORKER_COUNT 5
-#define DEBUG
+// #define DEBUG
+// #define PRINT
 
 void* db_worker_thread(void* arg) {
     int thread_id = (int)pthread_self();
@@ -44,6 +46,7 @@ void* db_worker_thread(void* arg) {
 
         char* sql_query = task_queue_dequeue(pool->queue);
         pthread_cond_signal(&pool->queue_not_full);
+        pool->completed_tasks++;
         pthread_mutex_unlock(&pool->pool_mutex);
 
 #ifdef DEBUG
@@ -58,7 +61,7 @@ void* db_worker_thread(void* arg) {
             PQclear(result);
             continue;
         }
-
+#ifdef PRINT
         int rows = PQntuples(result);
         int columns = PQnfields(result);
 
@@ -73,6 +76,7 @@ void* db_worker_thread(void* arg) {
             }
             printf("\n");
         }
+#endif
 
         PQclear(result);
 #ifdef DEBUG
@@ -93,7 +97,7 @@ db_connection_pool* db_connection_pool_init() {
         free(pool);
         return NULL;
     }
-
+    pool->completed_tasks = 0;
     pthread_mutex_init(&pool->pool_mutex, NULL);
     pthread_cond_init(&pool->queue_not_full, NULL);
     pthread_cond_init(&pool->queue_not_empty, NULL);
@@ -126,6 +130,16 @@ void db_connection_pool_query(db_connection_pool* pool, char* sql_query) {
     pthread_cond_signal(&pool->queue_not_empty);
     pthread_mutex_unlock(&pool->pool_mutex);
 }
+
+void db_connection_status(db_connection_pool* pool){
+    time_t current_time;
+    time(&current_time);
+
+    struct tm *local_time = localtime(&current_time);
+
+    printf("---- Connection Pool Status ----\nCurrent time: %02d:%02d:%02d\nActive workers: %d\nTask Queue size: %d\nCompleted tasks: %d\n", local_time->tm_hour, local_time->tm_min, local_time->tm_sec, WORKER_COUNT, QUEUE_CAPACITY, pool->completed_tasks);
+}
+
 
 int db_connection_pool_destroy(db_connection_pool* pool) {
     if (!pool) return -1;

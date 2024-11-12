@@ -11,6 +11,7 @@ typedef struct db_connection_pool {
     pthread_cond_t queue_not_full; // Condition for when queue is not full
     pthread_cond_t queue_not_empty; // Condition for when queue is not empty
     pthread_t* worker_threads;    // Array of worker threads
+    int completed_tasks;
 } db_connection_pool;
 
 // Initializes the connection pool
@@ -18,6 +19,9 @@ db_connection_pool* db_connection_pool_init();
 
 // Submits an SQL query to the connection pool
 void db_connection_pool_query(db_connection_pool* pool, char* sql_query);
+
+// Print current status of the connection pool
+void db_connection_status(db_connection_pool* pool);
 
 // Destroys the connection pool and frees resources
 int db_connection_pool_destroy(db_connection_pool* pool);
